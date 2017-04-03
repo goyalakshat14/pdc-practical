@@ -1,0 +1,389 @@
+        printf("\t    %d\t",nodes[i].t[j][2]);
+        printf("\t    %d\t",nodes[i].t[j][3]);
+   printf("\t    %d\t",nodes[i].t[j][4]);
+   printf("\n");
+}
+    }
+    getch();
+}
+void init(int n,int x)
+{
+        int j;
+        for(j=1;j<=n;j++)
+        {
+   if(j!=x)
+           {
+ nodes[x].t[j][1]=j;
+ nodes[x].t[j][2]=NOEDGE;
+       nodes[x].t[j][3]=j;
+                 nodes[x].t[j][4]=0;
+   }
+}
+ nodes[x].t[x][1]=x;
+      nodes[x].t[x][2]=0;
+      nodes[x].t[x][3]=x;
+      nodes[x].t[x][4]=0;
+}
+void input(int n,int x)
+{
+        int i;
+        printf("\n Enter distance to other nodes from %d\n",x);
+   printf("Enter 999 to indicated no-edge\n");
+   for(i=1;i<=n;i++)
+            if(i!=x)
+            {
+                printf("\n enter dist to %d: ",i);
+                scanf("%d",&nodes[x].t[i][2]);
+if(nodes[x].t[i][2]!=NOEDGE)
+{
+                        nodes[x].t[i][3]=i;
+                        nodes[x].t[i][4]=1;
+                }
+            }
+}
+23
+void update(int n,int x)
+{
+        int i,j,z;
+        for(i=1;i<=n;i++)
+             if(nodes[x].t[i][2]!=NOEDGE && nodes[x].t[i][2]!=0)
+             {
+                 for(j=1;j<=n;j++)
+                 {
+                      z=nodes[x].t[i][2]+nodes[i].t[j][2];
+                      if(nodes[x].t[j][2]>z)
+                      {
+                             nodes[x].t[j][2]=z;
+                             if(nodes[x].t[i][4]==1)
+                               nodes[x].t[j][3]=i;
+                             else if(nodes[x].t[i][4]>1)
+                              nodes[x].t[j][3]= nodes[x].t[i][3];
+ nodes[x].t[j][4]= nodes[x].t[i][4]+ nodes[i].t[j][4];
+           }
+      }
+              }
+}
+4.
+Using TCP/IP sockets, write a client – server program to make the client send the file name and
+to make the server send back the contents of the requested file if present.
+/*Socket- Server*/
+#include<stdio.h>
+#include<string.h>
+#include<fcntl.h>
+#include<sys/types.h>
+#include<sys/socket.h>
+#define PORT_ID 50
+struct sockaddr_in
+{
+short int sin_family;
+unsigned short int sin_port;
+unsigned long s_addr;
+unsigned char sin_zero[8];
+};
+int main()
+{
+char buf[2000];
+int fd1,n,fd2,size;
+23
+struct sockaddr_in s,s1;
+printf("server is ready\n");
+s.sin_family=AF_INET;
+s.sin_port=htons(PORT_ID);
+s.s_addr=inet_addr("127.0.0.1");
+bzero(&(s.sin_zero),8);
+fd1=socket(AF_INET,SOCK_STREAM,0);
+if((bind(fd1,(struct sockaddr*)&s,sizeof(struct sockaddr)))==-1)
+printf("Error.\n");
+if((listen(fd1,5))==-1)
+printf("Error\n");
+size=sizeof(struct sockaddr);
+printf("Waiting for client request\n");
+fd2=accept(fd1,(struct sockaddr*)&s1,&size);
+close(fd1);
+size=recv(fd2,buf,sizeof(buf),0);
+buf[size]='\0';
+printf("File:%s\n",buf);
+if((fd1=open(buf,O_RDONLY))!=-1)
+while((n=read(fd1,buf,sizeof(buf)))>0)
+send(fd2,buf,n,0);
+else
+send(fd2,"File not found",15,0);
+close(fd1);
+close(fd2);
+printf("server terminated\n");
+return 0;
+}
+/*Socket-Client*/
+#include<stdio.h>
+#include<string.h>
+#include<sys/types.h>
+#include<sys/socket.h>
+#define P_ID 50
+struct sockaddr_in
+{
+short int sin_family;
+unsigned short int sin_port;
+unsigned long s_addr;
+unsigned char sin_zero[8];
+};
+int main()
+{
+char buf[2000];
+int fd1,n;
+struct sockaddr_in s,s1;
+23
+printf("Enter file request to server:");
+scanf("%s",buf);
+s.sin_family=AF_INET;
+s.sin_port=htons(P_ID);
+s.s_addr=inet_addr("127.0.0.1");
+bzero(&(s.sin_zero),8);
+fd1=socket(AF_INET,SOCK_STREAM,0);
+if((connect(fd1,(struct sockaddr*)&s,sizeof(struct
+sockaddr)))==-1)
+printf("Error.\n");
+send(fd1,buf,strlen(buf),0);
+printf("\ncontents of file are\n\n");
+while((n=recv(fd1,buf,sizeof(buf),0))>0)
+{
+buf[n]='\0';
+printf("%s",buf);
+}
+printf("\n");
+close(fd1);
+return 0;
+}
+5.
+Implement the above program using as message queues or FIFOs as IPC channels.
+/*FIFO-Server*/
+#include<stdio.h>
+#include<fcntl.h>
+#include<sys/stat.h>
+main()
+{
+char buf[1000];
+int fd1,fd2,n,fd;
+mkfifo("LIFE",S_IFIFO|0777);
+printf("\n server started\n server is waiting");
+fd1=open("LIFE",O_RDONLY);
+n=read(fd1,buf,128);
+buf[n]='\0';
+close(fd1);
+fd2=open("LIFE",O_WRONLY);
+if((fd=open(buf,O_RDONLY))<0)
+{
+write(fd2,"file not found\n",16);
+printf("server termintated");
+}
+23
+while((n=read(fd,buf,128))>0)
+write(fd2,buf,n);
+close(fd);
+close(fd2);
+printf("\n server terminates\n");
+}
+/*FIFO-Client*/
+#include<stdio.h>
+#include<fcntl.h>
+#include<string.h>
+main()
+{
+ char buf[1000];
+ int fd1,fd2,n;
+ fd1=open("LIFE",O_WRONLY);
+printf("\n enter the filename: ");
+scanf("%s",buf);
+write(fd1,buf,strlen(buf));
+close(fd1);
+ fd2=open("LIFE",O_RDONLY);
+while((n=read(fd2,buf,128))>0)
+write(1,buf,n);
+close(fd2);
+}
+6.
+Write a program for simple RSA algorithm to encrypt and decrypt the data.
+#include<stdio.h>
+#include<math.h>
+#include<string.h>
+#define max 20
+int len,n,e,p,q, CIPHER[max];
+int main()
+{
+int i,j,d,z;
+int PLAIN[max],sum[max],asc;
+char M[max];
+clrscr();
+printf("\n Enter the message to encrypt: ");
+for(len=0;len<max;len++)
+23
+{
+scanf("%c",&M[len]);
+if(M[len]=='\n')
+break;
+}
+printf("\n Entered string is\n");
+for(i=0;i<len;i++)
+printf(" %c ",M[i]);
+        printf("\n Corresponding ASCII values are\n");
+for(i=0;i<len;i++)
+        printf(" %d ",M[i]);
+do
+{
+printf("\n\n Enter 2 large unequal prime num p & q: ");
+scanf("%d%d",&p,&q);
+        } while(p==q);
+n=p*q;
+z=(p-1)*(q-1);
+e=1;
+do
+{
+     e++;
+} while( (gcd(e,z)!=1) && e<z );
+printf("\n encryption key is %d ",e);
+printf("\n public key (e,n): %d %d\n",e,n);
+d=1;
+        do
+        {
+             d++;
+        } while( (e*d)%z!=1 && d<z );
+printf("\n decryption key is %d \n",d);
+        printf("\n\n private key (d,n): %d %d\n",d,n);
+for(i=0;i<len;i++)
+        CIPHER[i]=1;
+        for(i=0;i<len;i++)
+        {
+                 asc=M[i];
+for(j=1;j<=e;j++)
+23
+CIPHER[i] = ((CIPHER[i]*asc) % n);
+}
+for(i=0;i<len;i++)
+printf("\n CIPHERTEXT for mesg %c is %d ",M[i],CIPHER[i]);
+        printf("\n---------Decryption starts  now-------\n\n");
+        for(i=0;i<len;i++)
+PLAIN[i]=1;
+        for(i=0;i<len;i++)
+{
+sum[i]=1;
+for(j=1;j<=d;j++)
+ PLAIN[i]=(PLAIN[i]*((sum[i]*CIPHER[i]) % n))%n;
+}
+for(i=0;i<len;i++)
+printf("Number after decryption is %d & hence original Character
+is %c \n",PLAIN[i],PLAIN[i]);
+getch();
+return 0;
+}
+int gcd(int a,int b)
+{
+ if (b==0) return a;
+ else return (gcd(b,a%b));
+}
+7.
+Write a program for Hamming code generation for error detection and correction.
+#include<stdio.h>
+#include<math.h>
+void genhamcode();
+void makeerror();
+void correcterror();
+int h[12];
+int main()
+{
+     int i,ch;
+     clrscr();
+23
+     printf("\n enter the message in bits\n");
+     for(i=1;i<12;i++)
+          if(i==3||i==5||i==6||i==7||i==9||i==10||i==11)
+             scanf("%d",&h[i]);
+     genhamcode();
+      printf("\n do you want to make error\n(0 or 1)\n");
+      scanf("%d",&ch);
+      if(ch)
+      {
+            makeerror();
+             correcterror();
+      }
+      else
+      printf("\n no error");
+      getch();
+      return(0);
+ }
+void genhamcode()
+{
+   int temp,i;
+   temp=h[3]+h[5]+h[7]+h[9]+h[11];
+    (temp%2!=0)?(h[1]=1):(h[1]=0);
+    temp=h[3]+h[6]+h[7]+h[10]+h[11];
+    (temp%2!=0)?(h[2]=1):(h[2]=0);
+     temp=h[5]+h[6]+h[7];
+    (temp%2!=0)?(h[4]=1):(h[4]=0);
+     temp=h[9]+h[10]+h[11];
+    (temp%2!=0)?(h[8]=1):(h[8]=0);
+    printf("\n transmitted codeword is:\n");
+    for(i=1;i<12;i++)
+     printf(" %d ",h[i]);
+  }
+void makeerror()
+{
+  int pos,i;
+  printf("\n enter the position you want to make error\n");
+  scanf("%d",&pos);
+  if(h[pos]==1)
+     h[pos]=0;
+  else
+23
+     h[pos]=1;
+  printf("\n Error occured and the error codeword is\n");
+  for(i=1;i<12;i++)
+  printf(" %d ",h[i]);
+}
+void correcterror()
+{
+int r1,r2,r4,r8,i,errpos;
+r1=(h[1]+h[3]+h[5]+h[7]+h[9]+h[11])%2;
+r2=(h[2]+h[3]+h[6]+h[7]+h[10]+h[11])%2;
+r4=(h[4]+h[5]+h[6]+h[7])%2;
+r8=(h[8]+h[9]+h[10]+h[11])%2;
+errpos=r8*8+r4*4+r2*2+r1*1;
+printf("\n Error occured in pos %d\n",errpos);
+  printf("\n\n............ correction starts now........\n");
+  if(h[errpos]==1)
+      h[errpos]=0;
+  else
+      h[errpos]=1;
+  printf("\n Original codeword is :");
+  for(i=1;i<12;i++)
+  printf(" %d ",h[i]);
+}
+8.
+Write a program for congestion control using leaky bucket algorithm.
+#include<stdio.h>
+int main()
+ {
+int bcktsize, pkt[25], i, j, iter, rate, line, total=0;
+clrscr();
+printf("Enter the bucket size and output rate :");
+scanf("%d%d",&bcktsize,&rate);
+printf("Enter the number of input lines\n");
+        scanf("%d",&line);
+23
+printf("Enter input packet rate of %d lines\n",line);
+for(i=0;i<line;i++)
+scanf("%d",&pkt[i]);
+printf("Enter the number of iterations\n");
+ scanf("%d",&iter);
+for(i=0;i<iter;i++)
+        {
+  printf("\nIteration %d\n",i+1);
+          for(j=0;j<line;j++)
+  {
+       total+=pkt[j];
+       if(total<=bcktsize)
+    printf("\nInput from line %d with rate %d is added to the
+bucket\nNumber of packets in bucket is %d\n",j+1,pkt[j],total);
+else
+{
+   total-=pkt[j];
+   printf("\nInput from line %d with rate %d is  thrown out of
+bucket\nNumber of packets in bucket is %d\n",j+1,pkt[j],total);
